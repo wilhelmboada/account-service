@@ -39,11 +39,9 @@ public class AccountController {
     }
 
     @GetMapping("login")
-    public ResponseEntity<AccountResponseDTO> login(@RequestHeader("Authorization") String auth) {
-        String token = auth.substring(7);
-        String user = jwtUtil.extractUser(token);
+    public ResponseEntity<AccountResponseDTO> login(@RequestAttribute("user") String user) {
         Account account = accountUseCase.getAccount(user);
-        AccountResponseDTO dto = AccountFactory.toDTO(account, token);
+        AccountResponseDTO dto = AccountFactory.toDTO(account, user);
         return new ResponseEntity<>(dto, HttpStatus.OK);
     }
 

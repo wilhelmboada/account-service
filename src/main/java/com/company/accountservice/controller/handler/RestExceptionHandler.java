@@ -4,33 +4,35 @@ import com.company.accountservice.domain.error.BusinessError;
 import com.company.accountservice.controller.errors.Error;
 import com.company.accountservice.controller.errors.ErrorResponse;
 import io.jsonwebtoken.MalformedJwtException;
-import org.springframework.context.annotation.Configuration;
+import io.jsonwebtoken.SignatureException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@ControllerAdvice
-@RestController
-@Configuration
-public class RestExceptionHandler {
+@RestControllerAdvice
+public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler(value = MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
-    public ErrorResponse handleException(MethodArgumentNotValidException e) {
-        List<Error> error = processErrors(e);
-        return ErrorResponse
+    @Override
+    public ResponseEntity<Object> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
+        List<Error> error = processErrors(ex);
+        ErrorResponse errorResponse = ErrorResponse
                 .builder()
                 .error(error)
                 .build();
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
     private List<Error> processErrors(MethodArgumentNotValidException e) {
@@ -80,6 +82,21 @@ public class RestExceptionHandler {
     @ExceptionHandler(value = MissingRequestHeaderException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleException(MissingRequestHeaderException e) {
+        Error errorResponse = createErrorResponse(
+                ZonedDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                e.getMessage()
+        );
+        List<Error> error = List.of(errorResponse);
+        return ErrorResponse
+                .builder()
+                .error(error)
+                .build();
+    }
+
+    @ExceptionHandler(value = SignatureException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleException(SignatureException e) {
         Error errorResponse = createErrorResponse(
                 ZonedDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),

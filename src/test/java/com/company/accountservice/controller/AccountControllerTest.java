@@ -62,17 +62,14 @@ class AccountControllerTest {
     @Test
     void testLogin() {
         // Arrange
-        String token = "testToken";
-        String authorizationHeader = "Bearer " + token;
-        when(jwtUtil.extractUser(token)).thenReturn("testUser");
-        when(accountUseCase.getAccount("testUser")).thenReturn(buildAccount()); // Assuming encryption logic
+        when(accountUseCase.getAccount("test@test.com")).thenReturn(buildAccount()); // Assuming encryption logic
 
         // Act
-        ResponseEntity<AccountResponseDTO> responseEntity = accountController.login(authorizationHeader);
+        ResponseEntity<AccountResponseDTO> responseEntity = accountController.login("test@test.com");
 
         // Assert
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-        assertEquals("testToken", responseEntity.getBody().getToken());
+        assertEquals("test@test.com", responseEntity.getBody().getToken());
     }
 
     private AccountDTO buildAccountDTO() {
